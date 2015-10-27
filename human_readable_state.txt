@@ -1,0 +1,7 @@
+Lamport Clock:5
+--TT--
+[[5, 0], [0, 0]]
+Log:
+insert fjfjfj, T_i[i,i] = 2, UID = 0
+insert TEST EVENT, T_i[i,i] = 4, UID = 0
+insert TEST EVENT, T_i[i,i] = 5, UID = 0

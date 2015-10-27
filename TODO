@@ -1,0 +1,33 @@
+TO DO:    c - complete    O - obsolete, see note
+---------------------
+
+[ ] - Save Logs to Disk
+[ ] - Load Log on Boot if File exists
+[c] - Add Arguments for specifying your own node ID on launch (zero indexed)
+[c] - Fix One Indexed Stuff in Prompt
+[c] - Message:
+        <c> No Type
+        <c> No Event
+        <c> Yes TT
+        <c> Yes PL
+        <c> Yes sourceId
+        <c> Yes destID
+[c] - Prompt:
+        <c> Handle add events with algorithm including sending of notifications to participants
+                NOTE: I have commented out conflict resolution in the calendar Add event stuff
+        <c> Handle delete events with algorithm including sending of notifications to participatns
+[c] - Process.recvMsg():
+        <c> Handle AlgorithmHelper usage
+                NOTE: I have commented out outdated conflict resolution stuff here
+[O] - ThreadedServer Send Message:
+        <O> Handle AlgorithmHelper usage
+                NOTE: AlgHelper adds messages to the queue, threadserver just looks at the queue
+[c] - ThreadedServer import AlgHelper
+                NOTE: I am doing the storage of the outQueue in the alghelper class. Referenced globally from there
+[ ] - ThreadedServer: FIX INTER MESSAGING - NOT CERTAIN WHAT'S WRONG
+[ ] - Implement Conflict Resolution:
+                NOTE: Look at local version of calendar - is there a conflict? Ask user to enter new stuff
+                NOTE: On later learning of conflict - NIAB: New Is Always Better. New events take priority over old
+                events, don't worry about sending back stuff about conflict, proceed forward but notify all participants
+                of a delete event. THIS MAY BE BAD - EVENTS WITH OTHER PEOPLE MAY BE JUST TAKEN AWAY FROM THEM CUS
+                SOMEONES AN ASSHOLE. CHECK FOR AUTHORIZATION.

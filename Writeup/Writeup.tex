@@ -1,0 +1,119 @@
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+
+\documentclass[11pt]{article} % A4 paper and 11pt font size
+\usepackage[margin=1in]{geometry} 
+\geometry{letterpaper}
+
+\usepackage[english]{babel} % English language/hyphenation
+\usepackage{amsmath,amsfonts,amsthm} % Math packages
+\usepackage{amssymb}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{graphicx}
+
+
+
+\usepackage{sectsty} % Allows customizing section commands
+\sectionfont{ \sectionrule{0pt}{0pt}{-5pt}{0.4pt}}
+%\allsectionsfont{ \normalfont} % Make all sections centered, the default font and small caps
+
+
+\usepackage{fancyhdr} % Custom headers and footers
+\pagestyle{fancyplain} % Makes all pages in the document conform to the custom headers and footers
+\fancyhead{} % No page header - if you want one, create it in the same way as the fo oters below
+\fancyfoot[L]{} % Empty left footer
+\fancyfoot[C]{} % Empty center footer
+\fancyfoot[R]{\thepage} % Page numbering for right footer
+\renewcommand{\headrulewidth}{0pt} % Remove header underlines
+\renewcommand{\footrulewidth}{0pt} % Remove footer underlines
+\setlength{\headheight}{0pt} % Customize the height of the header
+
+\newcommand{\note}[1]{{\color{red}\textbf{#1}}}
+\newcommand{\ra}{\rightarrow}
+\newcommand{\pl}{\parallel}
+\newcommand{\ex}[2]{$\langle #1, #2 \rangle$}
+\newcommand{\rec}[1]{\text{#1R}}
+
+\newcommand{\D}{\ensuremath{\mathcal{D}} }
+\newcommand{\C}{\ensuremath{\mathcal{C}} }
+
+\newtheorem{theorem}{Theorem}
+
+%\numberwithin{equation}{section} % Number equations within sections (i.e. 1.1, 1.2, 2.1, 2.2 instead of 1, 2, 3, 4)
+%\numberwithin{figure}{section} % Number figures within sections (i.e. 1.1, 1.2, 2.1, 2.2 instead of 1, 2, 3, 4)
+%\numberwithin{table}{section} % Number tables within sections (i.e. 1.1, 1.2, 2.1, 2.2 instead of 1, 2, 3, 4)
+
+%\setlength\parindent{0pt} % Removes all indentation from paragraphs - comment this line for an assignment with lots of text
+
+%----------------------------------------------------------------------------------------
+%	TITLE SECTION
+%----------------------------------------------------------------------------------------
+
+\newcommand{\horrule}[1]{\rule{\linewidth}{#1}} % Create horizontal rule command with 1 argument of height
+
+\title{	
+\normalfont \large 
+Distributed Algorithms Project 1 \\ % The assignment title
+}
+
+\author{\small Neil McGlohon\\\small Mark Plagge} % Your name
+
+\date{October 20th, 2015} % Today's date or a custom date
+
+\begin{document}
+\maketitle % Print the title
+
+
+\section{Introduction}
+In order to solve the distributed calendar problem using the Wuu and Bernstein distributed replicated dictionary  algorithm, we decided to go with an object oriented approach using Python. This would allow us the strength of object based data structures from a language like Java but with, hopefully, the readability and low overhead of Python. Failures in communication has resulted in a couple silly quirks of the code structure, most notably the unintuitive location of some class definitions.
+
+Starting from the building blocks, we have made classes for a \textbf{Process}, which is the main kernel and data structure of a single node. \textbf{Processes} can prompt for user input, update their local $T_i$ and check for a \texttt{hasrec} call. They store a Lamport Clock, an ID number, a Calendar, a log, a local $T_i$, a rank, and the total number of processes in the network. Looking more at the stored \textbf{Calendar} object, this contains all of the \textbf{Calendar Events} that the node is aware of, not just the ones that were made on this node.
+
+\textbf{Calendars} are self explanatory objects, they simply store \textbf{Calendar Events}, they hold methods necessary for adding entries, deleting entries, as well as some other utility methods. \textbf{Calendar Events} are the user added content of the data structure. It stores all of the information that the user specifies for adding an event. They also contain methods to check and see if they are going to interfere with another calendar event.
+
+But so far, this has little to do with the Wuu and Bernstein replicated dictionary algorithm. This leads us to the lifeblood of our implementation. \textbf{User Event} objects are singular log entries. It is important to distinguish between \textbf{User Events} and \textbf{Calendar Events}. \textbf{User Events} are essentially, in English, "insert the calendar event $x$" where \textbf{Calendar Events} are essentially, in English, "These people have an event called $s$ at time $t$". \textbf{User Events} \emph{store} \textbf{Calendar Events} inside of them.
+
+The array of \textbf{User Events} for a single node are stored in the log in a \textbf{Process} on a single node instance.
+
+External packages to allow for this described implementation are as follows:
+\note{ 
+\begin{enumerate}
+\item We need some package info
+\end{enumerate}}
+
+\section{The Log}
+
+
+The log is kept updated, any time a calendar event is added, a user event of type: add is appended to the log. Similarly, any time a calendar event is deleted, a user event of type: delete is appended to the log. Items are never removed by the log except in the event of a message receipt. All handling of log behavior is in the file \texttt{alghelper.py}. This follows the exact algorithm by Wuu and Bernstein with the exception of Dictionary usage which we replace with Calendar usage. 
+
+\subsection{Sending a Message}
+Upon the sending of a message, the sender of the message need not do anything but check to see what it knows is the latest event that the recipient knows of. If the sender doesn't (or perhaps more truthfully, can't) know if the recipient has a log item in its record, then the record is included in the set of those sent with the message. Because we (assuming that 'we' are a single node that is sending a message) don't wait to hear for an 'ack' from the recipient, we can't know if they do in fact know about the events we just sent them - so we don't update our knowledge table in this step. This also means that we might result in sending non-disjoint partial logs at different times. That is okay, the reduced message length from sending partial logs is a good improvement but is not equivalent to the "optimal" circumstances which could only be theoretically possible if there were no message loss or node failures.
+
+\subsection{Receiving a Message}
+This is the most crucial step of the algorithm implementation. We first need to look at the received partial log, compare it with ours, and append anything that we don't have knowledge. Then we need to update our calendar to reflect the new information that we gained. We update our knowledge table and finally we update our log so that we remove any entries that we \emph{know} that every node in the network knows about. This is crucial for keeping the stored log length down.
+
+\section{Inter-node Communication}
+We utilize a TCP socket communication protocol for the transfer of information between nodes. A \textbf{Message} object is created which stores a partial log, a knowledge table, the sender ID, and for safety the recipient ID. This message object, when transferred over a socket, is parsed into a JSON format object which is then received by the recipient, deJSONed back into a message object, and the algorithm message received protocol takes care of the rest.
+
+\section{Stable Storage}
+Because nodes can fail - we allow for our Calendars and Logs to be written to the node's hard disk. \note{Holy crap we need to load the TT too. Whats stopping us from just saving a binary state file of the process at every step?} When a node is loaded, it checks to see if a storage file exists and loads it if it does. If no such file exists, it assumes that it must be a new process and not a recovered process, and starts up by initializing itself. The saved calendars and logs are user readable. \note{for the most part. they suck, can we fix that?}
+
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
