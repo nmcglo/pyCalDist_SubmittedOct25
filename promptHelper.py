@@ -6,7 +6,7 @@ def addEventParsing(proc, test=False):
     if test is False:
         addWelcome = 'Okay! You\'re going to add an event\n'
         # getMonth = 'What month? (mm)\n'
-        # getDay = 'What Day? (dd)\n'
+        getDay = 'What Day? (dd)\n'
         # getYear = 'What Year? (yyyy)\n'
 
         getStartTime = 'What is the start time? (24h hhmm)\n'
@@ -19,11 +19,11 @@ def addEventParsing(proc, test=False):
 
         print (addWelcome)
         # month = int(input(getMonth))
-        # day = int(input(getDay))
+        day = int(input(getDay))
         # year = int(input(getYear))
 
         month = 11
-        day = 16
+        # day = 16
         year = 1990
 
         startTime = input(getStartTime)
